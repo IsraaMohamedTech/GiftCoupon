@@ -67,7 +67,7 @@ class CreateCouponGift implements ObserverInterface
 		
 		
 		if($this->orderHasGift($observer))
-			$this->createRule();
+			$this->createRule($observer);
 		
     }
 	
@@ -76,7 +76,7 @@ class CreateCouponGift implements ObserverInterface
      *
      * @return void
      */
-    public function createRule()
+    public function createRule($observer)
     {
 		$newRule = $this->rule->create();
         $newRule->setName("Gift Discount")
@@ -91,7 +91,7 @@ class CreateCouponGift implements ObserverInterface
             ->setDiscountStep(0)
             ->setCouponType(RuleInterface::COUPON_TYPE_SPECIFIC_COUPON)
             ->setSimpleAction(RuleInterface::DISCOUNT_ACTION_FIXED_AMOUNT_FOR_CART)
-            ->setDiscountAmount(20)
+            ->setDiscountAmount($this->getGiftPrice($observer))
             ->setIsActive(true);
 
         try {
@@ -154,6 +154,31 @@ class CreateCouponGift implements ObserverInterface
 
         return $password = $this->mathRandom->getRandomString($length, $chars);
     }
+	
+	protected function getGiftPrice($observer)
+	{
+		/*$order = $observer->getEvent()->getOrder();
+		foreach($order->getAllItems() as $item){
+			$type = $item->getProductType();
+            $name = $item->getName();
+			if ($type == 'virtual' && $name == "Gif") {
+				return true;
+			}
+		}*/
+		$result = $observer->getEvent()->getResult();
+		$method_instance = $observer->getEvent()->getMethodInstance();
+		$quote = $observer->getEvent()->getQuote();
+		$items= $quote->getAllVisibleItems();
+		foreach ($items as $item) {
+            $type = $item->getProductType();
+            $name = $item->getName();
+			$price = $item->getPrice();
+			$qty = $item->getQty();
+			if ($type == 'virtual' && $name == "Gif") {
+				return $qty*$price;
+			}
+		}
+	}
 		
 
     
