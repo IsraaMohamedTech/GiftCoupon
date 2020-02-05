@@ -13,6 +13,7 @@ use Magento\Framework\Event\ObserverInterface;
 	use Magento\SalesRule\Api\CouponRepositoryInterface;
 	use Magento\Framework\Exception\NoSuchEntityException;
 	use Magento\SalesRule\Api\Data\RuleInterfaceFactory;
+	use Magento\Framework\Math\Random;
 
 class CreateCouponGift implements ObserverInterface
 {
@@ -41,19 +42,24 @@ class CreateCouponGift implements ObserverInterface
      * @var CouponInterface
      */
     protected $coupon;
-
+	
+	protected $mathRandom;
+	
+	
     public function __construct(
         CouponRepositoryInterface $couponRepository,
         RuleRepositoryInterface $ruleRepository,
         RuleInterfaceFactory $rule,
         CouponInterface $coupon,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+		Random $mathRandom
     ) {
         $this->couponRepository = $couponRepository;
         $this->ruleRepository = $ruleRepository;
         $this->rule = $rule;
         $this->coupon = $coupon;
         $this->logger = $logger;
+        $this->mathRandom = $mathRandom;
     }
 
     public function execute(\Magento\Framework\Event\Observer $observer)
@@ -73,8 +79,8 @@ class CreateCouponGift implements ObserverInterface
     public function createRule()
     {
 		$newRule = $this->rule->create();
-        $newRule->setName('20$ discount')
-            ->setDescription("20% Discount on applied rule")
+        $newRule->setName("Gift Discount")
+            ->setDescription("Gift Discount")
             ->setIsAdvanced(true)
             ->setStopRulesProcessing(false)
             ->setCustomerGroupIds([0, 1, 2])
@@ -113,7 +119,7 @@ class CreateCouponGift implements ObserverInterface
     public function createCoupon(int $ruleId) {
         /** @var CouponInterface $coupon */
         $coupon = $this->coupon;
-        $coupon->setCode('20FIXED')
+        $coupon->setCode($this->generateCoupon())
             ->setIsPrimary(1)
             ->setRuleId($ruleId);
 
@@ -138,6 +144,16 @@ class CreateCouponGift implements ObserverInterface
 		return false;
 		
 	}
+	
+	public function generateCoupon()
+    {
+		$length = 5;
+        $chars = \Magento\Framework\Math\Random::CHARS_LOWERS
+            . \Magento\Framework\Math\Random::CHARS_UPPERS
+            . \Magento\Framework\Math\Random::CHARS_DIGITS;
+
+        return $password = $this->mathRandom->getRandomString($length, $chars);
+    }
 		
 
     
